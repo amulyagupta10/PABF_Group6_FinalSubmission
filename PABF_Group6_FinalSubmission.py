@@ -1,12 +1,7 @@
-import streamlit as st
-import pandas as pd
 import numpy as np
-import joblib
-from sklearn.base import BaseEstimator,TransformerMixin
+import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
 
-# -----------------------------
-# Custom Winsorizer Transformer
-# -----------------------------
 class Winsorizer(BaseEstimator, TransformerMixin):
     def __init__(self, lower=0.01, upper=0.99):
         self.lower = lower
@@ -22,10 +17,6 @@ class Winsorizer(BaseEstimator, TransformerMixin):
         X = np.asarray(X, dtype=float)
         return np.clip(X, self.lower_bounds_, self.upper_bounds_)
 
-
-# ---------------------------------
-# Custom TargetEncoder1D Transformer
-# ---------------------------------
 class TargetEncoder1D(BaseEstimator, TransformerMixin):
     def __init__(self, min_samples_leaf=20, smoothing=10):
         self.min_samples_leaf = min_samples_leaf
@@ -39,16 +30,16 @@ class TargetEncoder1D(BaseEstimator, TransformerMixin):
         stats = y.groupby(X).agg(["mean", "count"])
         smoothing = 1 / (1 + np.exp(-(stats["count"] - self.min_samples_leaf) / self.smoothing))
         enc = self.global_mean_ * (1 - smoothing) + stats["mean"] * smoothing
-
         self.mapping_ = enc.to_dict()
         return self
 
     def transform(self, X):
         X = pd.Series(X.ravel())
         return X.map(self.mapping_).fillna(self.global_mean_).values.reshape(-1, 1)
-		
-# Load trained pipeline
+
+import joblib
 model = joblib.load("churn_model.pkl")
+
 
 st.title("📊 Telecom Churn Prediction App")
 st.write("""
